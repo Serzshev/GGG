@@ -1,0 +1,120 @@
+import tkinter as tk
+import random
+
+# --- Game State ---
+symbols = ["🍒", "🍋", "🔔", "⭐", "7️⃣", "🍇", "💎"]
+credits = 10
+wins = 0
+bet = 1
+current_grid = [[""] * 3 for _ in range(3)]
+
+# --- Logic Functions ---
+def spin():
+    global credits, wins
+    if credits < bet:
+        result_label.config(text="Not enough credits!")
+        return
+
+    result_label.config(text="Spinning...")
+    root.update_idletasks()
+    
+    for r in range(3):
+        for c in range(3):
+            symbol = random.choice(symbols)
+            grid_labels[r][c].config(text=symbol)
+            current_grid[r][c] = symbol
+
+    if check_win():
+        reward = bet * 10
+        credits += reward
+        wins += 1
+        result_label.config(text=f"🎉 WIN! You won {reward} credits!")
+    else:
+        credits -= bet
+        result_label.config(text="No win. Try again!")
+
+    update_ui()
+
+def check_win():
+    # Check rows
+    for row in current_grid:
+        if row[0] == row[1] == row[2]:
+            return True
+
+    # Check diagonals
+    if current_grid[0][0] == current_grid[1][1] == current_grid[2][2]:
+        return True
+    if current_grid[0][2] == current_grid[1][1] == current_grid[2][0]:
+        return True
+
+    return False
+
+def reset_game():
+    global credits, wins
+    credits = 10
+    wins = 0
+    result_label.config(text="Game reset!")
+    update_ui()
+
+def change_bet(amount):
+    global bet
+    bet = amount
+    update_ui()
+
+def update_ui():
+    credit_label.config(text=f"Credits: {credits}")
+    win_label.config(text=f"Wins: {wins}")
+    bet_label.config(text=f"Current Bet: {bet}")
+
+# --- GUI Setup ---
+root = tk.Tk()
+root.title("Slot Machine")
+root.configure(bg="black")
+
+# Grid
+grid_frame = tk.Frame(root, bg="black")
+grid_frame.pack(pady=10)
+
+grid_labels = [[None]*3 for _ in range(3)]
+for r in range(3):
+    for c in range(3):
+        lbl = tk.Label(grid_frame, text=random.choice(symbols), font=("Arial", 32), width=2, bg="black", fg="white")
+        lbl.grid(row=r, column=c, padx=10, pady=10)
+        grid_labels[r][c] = lbl
+
+# Status
+credit_label = tk.Label(root, text=f"Credits: {credits}", font=("Arial", 16), fg="white", bg="black")
+credit_label.pack()
+
+win_label = tk.Label(root, text=f"Wins: {wins}", font=("Arial", 14), fg="lightgreen", bg="black")
+win_label.pack()
+
+bet_label = tk.Label(root, text=f"Current Bet: {bet}", font=("Arial", 14), fg="cyan", bg="black")
+bet_label.pack()
+
+result_label = tk.Label(root, text="", font=("Arial", 14), fg="yellow", bg="black")
+result_label.pack(pady=5)
+
+# Buttons
+btn_frame = tk.Frame(root, bg="black")
+btn_frame.pack(pady=5)
+
+spin_btn = tk.Button(btn_frame, text="SPIN", command=spin, font=("Arial", 14), bg="green", fg="white", width=10)
+spin_btn.grid(row=0, column=0, padx=5)
+
+reset_btn = tk.Button(btn_frame, text="RESET", command=reset_game, font=("Arial", 14), bg="red", fg="white", width=10)
+reset_btn.grid(row=0, column=1, padx=5)
+
+# Bet controls
+bet_frame = tk.Frame(root, bg="black")
+bet_frame.pack(pady=5)
+
+tk.Label(bet_frame, text="Set Bet:", font=("Arial", 12), fg="white", bg="black").pack(side=tk.LEFT, padx=5)
+
+for b in [1, 2, 5]:
+    tk.Button(bet_frame, text=str(b), command=lambda b=b: change_bet(b),
+              font=("Arial", 12), bg="blue", fg="white", width=3).pack(side=tk.LEFT, padx=2)
+
+# Start
+update_ui()
+root.mainloop()
