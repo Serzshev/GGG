@@ -1,0 +1,78 @@
+# 🎰 Python Slot Machine Game (Thonny-Compatible)
+
+## 🧾 Overview
+
+This is a **fully offline, emoji-based slot machine game** built in **pure Python** using **Tkinter**, designed to run in **Thonny** without requiring any external modules or internet connection.
+
+---
+
+## 🚀 Features
+
+- 🎰 3x3 slot machine grid
+- 💰 Credit system (starts with 10 credits)
+- 🔁 Spin button with emoji symbols
+- 🧠 Win detection: rows and diagonals
+- 🤑 Adjustable bet (1, 2, or 5 credits)
+- 🎉 Dynamic rewards (Win = bet × 10)
+- 🧮 Win counter
+- ❌ Prevents spinning if not enough credits
+- 🔄 Reset button to restart the game
+
+---
+
+## 🖥 How to Run
+
+1. Open **Thonny**
+2. Copy and paste the game code into a new file (e.g. `slot_machine.py`)
+3. Click **Run ▶** or press **F5** — the game window will appear
+
+✅ No installations or setup required  
+✅ Works with standard Python 3  
+❌ No internet or `pip` needed
+
+---
+
+## 🎮 How to Play
+
+- Click **"SPIN"** to play a round
+- Match **3 symbols** in a row or diagonal to win
+- Use the **bet buttons** (1, 2, 5) to increase or lower your bet
+- If you win, you earn `bet × 10` credits
+- If you run out of credits, click **"RESET"** to start again
+
+---
+
+## 🧩 Customization Ideas
+
+Want to upgrade the game? Try adding:
+
+- Sound effects using `winsound` (Windows) or `pygame`
+- Vertical win detection
+- Auto-spin feature (spin 5x automatically)
+- High score tracking saved to a file
+- Animated spinning effect
+
+---
+
+## 📦 No Dependencies
+
+- ✅ Uses only built-in modules:
+  - `tkinter`
+  - `random`
+- ❌ No `pip`
+- ❌ No external images
+- ❌ No internet needed
+
+---
+
+## 📁 File Info
+
+- `slot_machine.py` — Main Python file containing the game code
+
+---
+
+## 🧑‍💻 Built For
+
+- Beginners learning Python
+- Students using **Thonny**
+- Anyone wanting a fun GUI game without extra setup
