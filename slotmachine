@@ -2,7 +2,7 @@ import tkinter as tk
 import random
 
 # --- Game State ---
-symbols = ["🍒", "🍋", "🔔", "⭐", "7️", "🍇", "💎"]
+symbols = ["🍒", "🍋", "🔔", "⭐", "7", "🍇", "💎"]
 credits = 10
 wins = 0
 bet = 1
