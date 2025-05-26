@@ -4,9 +4,9 @@ import sys
 
 # Initialize Pygame
 pygame.init()
-WIDTH, HEIGHT = 900, 600
+WIDTH, HEIGHT = 900, 650
 win = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Blackjack")
+pygame.display.set_caption("Blackjack Pro")
 
 # Fonts and Colors
 FONT = pygame.font.SysFont("arial", 24)
@@ -16,11 +16,18 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 120, 0)
 RED = (200, 0, 0)
+GOLD = (255, 215, 0)
 GRAY = (200, 200, 200)
 CARD_COLOR = (255, 255, 240)
-CARD_BORDER = (0, 0, 0)
 
-# Cards and Values
+# Game variables
+player_money = 1000
+current_bet = 100
+wins = 0
+losses = 0
+
+# Card suits and values
+suits = ['♥', '♦', '♠', '♣']
 cards = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 card_values = {
     "2": 2, "3": 3, "4": 4, "5": 5, "6": 6,
@@ -33,36 +40,44 @@ def draw_text(text, font, color, x, y):
     win.blit(label, (x, y))
 
 def deal_card():
-    return random.choice(cards)
+    card = random.choice(cards)
+    suit = random.choice(suits)
+    return f"{card}{suit}"
+
+def get_card_value(card):
+    return card_values[card[:-1]]
 
 def calculate_score(hand):
-    score = sum(card_values[card] for card in hand)
-    aces = hand.count("A")
+    score = sum(get_card_value(card) for card in hand)
+    aces = sum(1 for card in hand if card.startswith('A'))
+    
     while score > 21 and aces:
         score -= 10
         aces -= 1
     return score
 
-def draw_card(card, x, y):
-    pygame.draw.rect(win, CARD_COLOR, (x, y, 60, 90))
-    pygame.draw.rect(win, CARD_BORDER, (x, y, 60, 90), 2)
+def draw_card(card, x, y, hidden=False):
+    if hidden:
+        pygame.draw.rect(win, RED, (x, y, 70, 100))
+        pygame.draw.rect(win, BLACK, (x, y, 70, 100), 2)
+        draw_text("?", FONT, WHITE, x + 25, y + 30)
+        return
     
-    # Card face (top text)
-    card_text = FONT.render(card, True, BLACK)
-    win.blit(card_text, (x + 18, y + 10))
+    # Card background
+    pygame.draw.rect(win, CARD_COLOR, (x, y, 70, 100))
+    pygame.draw.rect(win, BLACK, (x, y, 70, 100), 2)
     
-    # Card value (bottom text)
-    value_text = SMALL_FONT.render(f"= {card_values[card]}", True, BLACK)
-    win.blit(value_text, (x + 8, y + 60))
+    # Card value and suit
+    color = RED if card[-1] in ['♥', '♦'] else BLACK
+    draw_text(card[:-1], FONT, color, x + 10, y + 10)
+    draw_text(card[-1], FONT, color, x + 50, y + 70)
 
 def draw_hand(hand, x, y, hide_first=False):
     for i, card in enumerate(hand):
         if hide_first and i == 0:
-            pygame.draw.rect(win, RED, (x + i * 70, y, 60, 90))
-            pygame.draw.rect(win, BLACK, (x + i * 70, y, 60, 90), 2)
-            draw_text("?", FONT, WHITE, x + i * 70 + 22, y + 30)
+            draw_card(card, x + i * 80, y, hidden=True)
         else:
-            draw_card(card, x + i * 70, y)
+            draw_card(card, x + i * 80, y)
 
 def draw_button(text, x, y, w, h, color):
     pygame.draw.rect(win, color, (x, y, w, h), border_radius=8)
@@ -70,6 +85,8 @@ def draw_button(text, x, y, w, h, color):
     return pygame.Rect(x, y, w, h)
 
 def main():
+    global player_money, wins, losses, current_bet
+    
     clock = pygame.time.Clock()
     player_hand = [deal_card(), deal_card()]
     dealer_hand = [deal_card(), deal_card()]
@@ -80,7 +97,11 @@ def main():
     running = True
     while running:
         win.fill(GREEN)
-        draw_text("Blackjack", BIG_FONT, WHITE, 370, 20)
+        draw_text(f"Money: ${player_money}", FONT, GOLD, 20, 20)
+        draw_text(f"Bet: ${current_bet}", FONT, GOLD, 20, 60)
+        draw_text(f"Wins: {wins}  Losses: {losses}", FONT, WHITE, 20, 100)
+        
+        draw_text("Blackjack Pro", BIG_FONT, WHITE, 350, 20)
         draw_text("Your Hand", FONT, WHITE, 50, 140)
         draw_hand(player_hand, 50, 170)
         draw_text("Dealer's Hand", FONT, WHITE, 50, 340)
@@ -89,11 +110,12 @@ def main():
         if not game_over and player_turn:
             hit_btn = draw_button("Hit", 700, 200, 120, 50, GRAY)
             stand_btn = draw_button("Stand", 700, 270, 120, 50, GRAY)
+            double_btn = draw_button("Double", 700, 340, 120, 50, GRAY)
         else:
             again_btn = draw_button("Play Again", 680, 400, 160, 50, GRAY)
 
         if game_over:
-            draw_text(result, BIG_FONT, RED if "lose" in result.lower() else WHITE, 300, 500)
+            draw_text(result, BIG_FONT, RED if "lose" in result.lower() else GOLD, 300, 500)
 
         pygame.display.update()
         clock.tick(30)
@@ -108,31 +130,51 @@ def main():
                     if hit_btn.collidepoint(mx, my):
                         player_hand.append(deal_card())
                         if calculate_score(player_hand) > 21:
-                            result = "You busted! Dealer wins."
+                            result = "Bust! You lose!"
+                            losses += 1
+                            player_money -= current_bet
                             game_over = True
-                            player_turn = False
                     elif stand_btn.collidepoint(mx, my):
                         player_turn = False
-                        while calculate_score(dealer_hand) < 17:
-                            dealer_hand.append(deal_card())
-                        player_score = calculate_score(player_hand)
-                        dealer_score = calculate_score(dealer_hand)
-                        if dealer_score > 21:
-                            result = "Dealer busted! You win!"
-                        elif player_score > dealer_score:
-                            result = "You win!"
-                        elif player_score < dealer_score:
-                            result = "Dealer wins!"
-                        else:
-                            result = "It's a tie!"
-                        game_over = True
+                    elif double_btn.collidepoint(mx, my) and len(player_hand) == 2:
+                        if player_money >= current_bet:
+                            player_money -= current_bet
+                            current_bet *= 2
+                            player_hand.append(deal_card())
+                            player_turn = False
+
                 elif game_over:
                     if again_btn.collidepoint(mx, my):
                         main()
                         return
 
+        if not player_turn and not game_over:
+            while calculate_score(dealer_hand) < 17:
+                dealer_hand.append(deal_card())
+            
+            player_score = calculate_score(player_hand)
+            dealer_score = calculate_score(dealer_hand)
+            
+            if dealer_score > 21:
+                result = "Dealer bust! You win!"
+                wins += 1
+                player_money += current_bet * 2
+            elif player_score > dealer_score:
+                result = "You win!"
+                wins += 1
+                player_money += current_bet * 2
+            elif player_score < dealer_score:
+                result = "Dealer wins!"
+                losses += 1
+                player_money -= current_bet
+            else:
+                result = "Push!"
+                player_money += current_bet
+            
+            game_over = True
+
     pygame.quit()
     sys.exit()
 
-main()
-
+if __name__ == "__main__":
+    main()
