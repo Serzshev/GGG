@@ -1,23 +1,34 @@
-# 🃏 Blackjack Game (Pygame Version)
+# 🃏 Blackjack Pro
 
-A simple Blackjack game built with **Python** and **Pygame**, perfect for beginners and designed to run in **Thonny** or any Python IDE.
+A casino-style Blackjack game with money management and professional features, built with Pygame.
 
-## 🎮 Features
+![Game Screenshot](screenshot.png) *(Add your screenshot here)*
 
-- Visual cards drawn with their label (e.g., `A`, `K`) and value (e.g., `= 11`)
-- Full Blackjack gameplay:
-  - Hit / Stand buttons
-  - Dealer AI that plays after you stand
-  - Bust, Win, Lose, and Tie detection
-- Aces are automatically counted as `11` or `1` depending on your hand
-- Restart the game with the "Play Again" button
+## 🚀 Features
 
-## 🛠 Requirements
+- **Real Casino Rules**
+  - Dealer hits on 16, stands on 17
+  - Double down option available
+  - Natural Blackjack (21) detection
+- **Money Management System**
+  - $1000 starting balance
+  - Track wins/losses
+  - Betting system with adjustable stakes
+- **Professional Visuals**
+  - Card suits with proper colors (♥♦♠♣)
+  - Hidden dealer card
+  - Clean UI with game statistics
+- **Game Features**
+  - Double down option
+  - Win/loss tracking
+  - Auto-reshuffling deck
+  - Proper card value handling (Aces = 1/11)
 
-- Python 3.x
+## ⚙️ Requirements
+
+- Python 3.6+
 - Pygame library
 
-### 💾 Install Pygame
-
+Install Pygame:
 ```bash
 pip install pygame
