@@ -12,7 +12,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("🎲 Roulette Spin Game")
 
 # Colors
-BACKGROUND = (53, 101, 77)  # Dark green
+BACKGROUND = (53, 101, 77)
 WHEEL_BASE = (100, 100, 100)
 WHEEL_RIM = (70, 70, 70)
 RED = (214, 40, 40)
@@ -21,7 +21,6 @@ BLACK = (30, 30, 30)
 GREEN = (35, 140, 70)
 DARK_GREEN = (20, 90, 50)
 WHITE = (255, 255, 255)
-YELLOW = (255, 215, 0)
 GOLD = (255, 200, 0)
 BUTTON_BLUE = (0, 120, 215)
 
@@ -42,7 +41,7 @@ result_color = None
 result_number = None
 message = ""
 history = []
-game_state = "MENU"  # MENU, PLAYING, GAME_OVER
+game_state = "MENU"
 
 # Roulette layout
 roulette_slots = [(0, "green")] + [(i, "red" if (1 <= i <= 10 or 19 <= i <= 28) and i % 2 == 1 or 
@@ -52,8 +51,6 @@ roulette_slots = [(0, "green")] + [(i, "red" if (1 <= i <= 10 or 19 <= i <= 28) 
 # Wheel setup
 WHEEL_CENTER = (WIDTH//2, HEIGHT//2 - 30)
 WHEEL_RADIUS = 220
-BALL_RADIUS = 10
-ball_pos = [WHEEL_CENTER[0], WHEEL_CENTER[1]-WHEEL_RADIUS+15]
 
 def draw_wheel():
     """Draw the roulette wheel with numbers and colors"""
@@ -81,7 +78,7 @@ def draw_wheel():
             40
         )
         
-        # Draw number (fixed orientation)
+        # Draw number
         text_angle = math.radians(i * slot_angle + slot_angle/2 - angle)
         text = font_medium.render(str(num), True, WHITE)
         text_rotated = pygame.transform.rotate(text, math.degrees(-text_angle))
@@ -92,13 +89,14 @@ def draw_wheel():
         text_rect = text_rotated.get_rect(center=text_pos)
         screen.blit(text_rotated, text_rect)
     
-    # Draw ball
-    if spinning:
-        ball_angle = math.radians(-angle + 90)  # Adjusted for counter-clockwise
-        ball_pos[0] = WHEEL_CENTER[0] + (WHEEL_RADIUS-25) * math.cos(ball_angle)
-        ball_pos[1] = WHEEL_CENTER[1] + (WHEEL_RADIUS-25) * math.sin(ball_angle)
-    pygame.draw.circle(screen, WHITE, (int(ball_pos[0]), int(ball_pos[1])), BALL_RADIUS)
-    pygame.draw.circle(screen, (200, 200, 200), (int(ball_pos[0]), int(ball_pos[1])), BALL_RADIUS-3)
+    # Draw fixed arrow indicator
+    arrow_size = 20
+    arrow_pos = (WHEEL_CENTER[0], HEIGHT//2 - 30 - WHEEL_RADIUS - 10)
+    pygame.draw.polygon(screen, RED, [
+        (arrow_pos[0] - arrow_size, arrow_pos[1]),
+        (arrow_pos[0] + arrow_size, arrow_pos[1]),
+        (arrow_pos[0], arrow_pos[1] - arrow_size*1.5)
+    ])
 
 def draw_ui():
     """Draw user interface elements"""
@@ -126,7 +124,7 @@ def draw_ui():
     pygame.draw.rect(screen, RED if selected_color == "red" else DARK_RED, (100, HEIGHT-80, 100, 50), border_radius=5)
     pygame.draw.rect(screen, BLACK if selected_color == "black" else (50, 50, 50), (220, HEIGHT-80, 100, 50), border_radius=5)
     pygame.draw.rect(screen, GREEN if selected_color == "green" else DARK_GREEN, (340, HEIGHT-80, 100, 50), border_radius=5)
-    pygame.draw.rect(screen, BUTTON_BLUE, (460, HEIGHT-80, 100, 50), border_radius=5)  # Spin button
+    pygame.draw.rect(screen, BUTTON_BLUE, (460, HEIGHT-80, 100, 50), border_radius=5)
     
     # Button labels
     screen.blit(font_medium.render("RED", True, WHITE), (130, HEIGHT-70))
@@ -153,16 +151,13 @@ def draw_menu():
     """Draw the main menu screen"""
     screen.fill(BACKGROUND)
     
-    # Title with shadow
-    title = font_title.render("ROULETTE SPIN", True, (30, 30, 30))
-    screen.blit(title, (WIDTH//2 - title.get_width()//2 + 3, HEIGHT//3 + 3))
+    # Title
     title = font_title.render("ROULETTE SPIN", True, GOLD)
     screen.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//3))
     
     # Start button
     start_btn = pygame.Rect(WIDTH//2-100, HEIGHT//2, 200, 60)
     pygame.draw.rect(screen, GREEN, start_btn, border_radius=10)
-    pygame.draw.rect(screen, DARK_GREEN, start_btn, 3, border_radius=10)
     screen.blit(font_large.render("START GAME", True, WHITE), 
                (WIDTH//2 - 70, HEIGHT//2 + 15))
     
@@ -171,72 +166,54 @@ def draw_menu():
 def draw_game_over():
     """Draw the game over screen"""
     screen.fill(BACKGROUND)
-    
-    # Game over text
     game_over = font_title.render("GAME OVER", True, RED)
     screen.blit(game_over, (WIDTH//2 - game_over.get_width()//2, HEIGHT//3))
-    
-    # Restart prompt
     restart = font_large.render("Click to play again", True, WHITE)
     screen.blit(restart, (WIDTH//2 - restart.get_width()//2, HEIGHT//2))
-    
-    # Final coins
-    coins_text = font_medium.render(f"Final coins: {coins}", True, GOLD)
-    screen.blit(coins_text, (WIDTH//2 - coins_text.get_width()//2, HEIGHT//2 + 50))
 
 def start_spin():
-    """Start the wheel spinning"""
-    global target_angle, spinning, spin_speed, result_number, result_color, message
-    
+    global spinning, spin_speed, result_number, result_color, message, angle
     if not selected_color:
-        message = "Please select a color!"
+        message = "Select a color first!"
         return
     
     if coins < bet_amount:
         message = "Not enough coins!"
         return
     
-    # Select random result
+    # Random result selection
     result_number, result_color = random.choice(roulette_slots)
     result_index = roulette_slots.index((result_number, result_color))
-    slot_angle = 360 / len(roulette_slots)
-    stop_angle = result_index * slot_angle
     
     # Calculate spin parameters
-    spins = random.randint(3, 5)
-    target_angle = (spins * 360) + (360 - stop_angle)  # Counter-clockwise adjustment
+    slot_angle = 360 / len(roulette_slots)
+    target_angle = 360 * 5 + (result_index * slot_angle) + (slot_angle / 2)
+    
     spinning = True
     spin_speed = 15
     message = ""
+    angle %= 360  # Normalize angle
 
 def update_spin():
-    """Update the wheel spinning animation"""
     global angle, spin_speed, spinning, coins, message, history
-    
     if spinning:
-        angle -= spin_speed  # Counter-clockwise rotation
+        angle -= spin_speed
         spin_speed *= 0.98
         
-        if spin_speed < 0.5 and spinning:
+        if spin_speed < 0.1:
             spinning = False
-            angle %= 360
-            
-            # Record result
             history.insert(0, (result_number, result_color))
             if len(history) > 5:
                 history.pop()
             
-            # Check win
-            win = 0
+            # Calculate winnings
             if selected_color == result_color:
-                if result_color == "green":
-                    win = bet_amount * 14
-                else:
-                    win = bet_amount * 2
-            
-            # Update coins
-            coins += win if win else -bet_amount
-            message = f"You won {win} coins!" if win else "You lost!"
+                multiplier = 14 if result_color == "green" else 2
+                coins += bet_amount * multiplier
+                message = f"Won {bet_amount * multiplier} coins!"
+            else:
+                coins -= bet_amount
+                message = "Try again!"
             
             if coins <= 0:
                 global game_state
@@ -245,66 +222,52 @@ def update_spin():
 # Main game loop
 clock = pygame.time.Clock()
 running = True
+
 while running:
-    screen.fill(BACKGROUND)
-    
-    if game_state == "MENU":
-        start_btn = draw_menu()
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+            pygame.quit()
+            sys.exit()
+            
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if game_state == "MENU":
+                start_btn = draw_menu()
                 if start_btn.collidepoint(event.pos):
                     game_state = "PLAYING"
                     coins = 100
                     history = []
-                    message = ""
+                    
+            elif game_state == "PLAYING" and not spinning:
+                x, y = event.pos
+                # Color buttons
+                if 100 <= x <= 200 and HEIGHT-80 <= y <= HEIGHT-30:
+                    selected_color = "red"
+                elif 220 <= x <= 320 and HEIGHT-80 <= y <= HEIGHT-30:
+                    selected_color = "black"
+                elif 340 <= x <= 440 and HEIGHT-80 <= y <= HEIGHT-30:
+                    selected_color = "green"
+                elif 460 <= x <= 560 and HEIGHT-80 <= y <= HEIGHT-30:
+                    start_spin()
+                # Bet controls
+                elif 580 <= x <= 620 and HEIGHT-80 <= y <= HEIGHT-30:
+                    bet_amount = max(10, bet_amount - 10)
+                elif 630 <= x <= 670 and HEIGHT-80 <= y <= HEIGHT-30:
+                    bet_amount = min(coins, bet_amount + 10)
+                    
+            elif game_state == "GAME_OVER":
+                game_state = "MENU"
+
+    screen.fill(BACKGROUND)
     
+    if game_state == "MENU":
+        draw_menu()
     elif game_state == "PLAYING":
         draw_wheel()
         draw_ui()
         update_spin()
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            
-            if event.type == pygame.MOUSEBUTTONDOWN and not spinning:
-                x, y = event.pos
-                
-                # Color buttons
-                if 100 <= x <= 200 and HEIGHT-80 <= y <= HEIGHT-30:
-                    selected_color = "red"
-                    message = ""
-                elif 220 <= x <= 320 and HEIGHT-80 <= y <= HEIGHT-30:
-                    selected_color = "black"
-                    message = ""
-                elif 340 <= x <= 440 and HEIGHT-80 <= y <= HEIGHT-30:
-                    selected_color = "green"
-                    message = ""
-                elif 460 <= x <= 560 and HEIGHT-80 <= y <= HEIGHT-30:
-                    start_spin()
-                
-                # Bet controls
-                elif 580 <= x <= 620 and HEIGHT-80 <= y <= HEIGHT-30:
-                    if bet_amount > 10:
-                        bet_amount -= 10
-                elif 630 <= x <= 670 and HEIGHT-80 <= y <= HEIGHT-30:
-                    if bet_amount < coins:
-                        bet_amount += 10
-    
     elif game_state == "GAME_OVER":
         draw_game_over()
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                game_state = "MENU"
-
+    
     pygame.display.flip()
     clock.tick(60)
-
-pygame.quit()
-sys.exit()
